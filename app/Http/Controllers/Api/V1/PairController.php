@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\BaseController;
 use App\Models\Pair;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PairController extends BaseController
 {
@@ -51,11 +53,13 @@ class PairController extends BaseController
     {
 
         $user = $this->getUser();
-        $pair = Pair::where('user1_id', $user->id)->orWhere('user2_id', $user->id)->first();
+        $pair = NULL;
+        if($user->pair_id != null){
+            $pair = Pair::where('id', $user->pair_id)->first();
+        }
         $partner = null;
-        if ($user["partnerId"] != null && $user["partnerId"] !=  "") {
-            $partnerRes = DB::select("SELECT * FROM user WHERE id=?", [$user->partnerId]);
-            $partner = $partnerRes[0] ?? null;
+        if($user->partner_id != null){
+            $partner = User::where('id', $user->partner_id)->first();
         }
 
         $resp = [
@@ -69,28 +73,35 @@ class PairController extends BaseController
     public function connect(Request $request)
     {
         $code = $request->input('code');
-        $pair = DB::table('pair')->where('connectkey', $code)->first();
+        $user = DB::table('user')->where('connectkey', $code)->first();
 
-        if ($pair == NULL || $pair["user2_id"] != NULL) {
+        if ($user == NULL || $user->partner_id != NULL) {
             return $this->sendErro("wrongPair");
         }
 
-        $loggedInUserId = $this->getUser()->id;
+        $loggedInUser = $this->getUser();
 
-        $updated = DB::table('users')
-            ->where('id', $loggedInUserId)
+        $newPair = [];
+        $newPair["user1_id"] = $loggedInUser->id;
+        $newPair["user2_id"] = $user->id;
+        $newPair["uuid"] = str_replace('-', '', Str::uuid());
+        $newPair["created_at"] = now();
+        $pair = Pair::create($newPair);
+
+        $updated = DB::table('user')
+            ->where('id', $user->id)
             ->update([
                 'pair_id' => $pair->id,
-                'partner_id' => $pair->user1_id,
+                'partner_id' => $loggedInUser->id,
+                'connectkey' => null
             ]);
-
-        $updated = DB::table('users')
-            ->where('id', $pair->user1_id)
+        $updated = DB::table('user')
+            ->where('id', $loggedInUser->id)
             ->update([
-                'partner_id' => $loggedInUserId
+                'pair_id' => $pair->id,
+                'partner_id' => $user->id,
+                'connectkey' => null
             ]);
-
-        $updated = $pair->update(["user2_id" => $loggedInUserId]);
 
         if ($updated) {
             return $this->sendResponse(true);

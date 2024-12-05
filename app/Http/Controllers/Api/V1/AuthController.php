@@ -35,16 +35,53 @@ class AuthController extends BaseController
         $token = $user->createToken('afe34vf324dfGU45')->plainTextToken;
         $data['token'] =  $token;
         $data['user'] =  UserResource::make($user);
-       
-       // $pair = Pair::find($user->pair_id);
-       
-       
+
+        // $pair = Pair::find($user->pair_id);
+
+
         /*  if ($pair->user2_id == NULL) {
             return $this->sendError('notGrouped', [$pair->uuid], 200);
         } */
-      //  $data['pair'] = PairResource::make($pair);
-       // $partnerId = $pair->user1_id == $user->id ? $pair->user2_id : $pair->user1_id;
-       // $data['partner'] =  UserResource::make(User::where('id',$partnerId)->first());
+        //  $data['pair'] = PairResource::make($pair);
+        // $partnerId = $pair->user1_id == $user->id ? $pair->user2_id : $pair->user1_id;
+        // $data['partner'] =  UserResource::make(User::where('id',$partnerId)->first());
+        return $this->sendResponse($data, 'successfully.');
+    }
+
+    public function loginnative(Request $request)
+    {
+        $fields = $request->validate([
+            'email' => 'required|string',
+            'id' => 'required|string',
+            'registertype' => 'required|string'
+        ]);
+
+        $user = User::where([
+            ['nativeid', '=', $fields['id']],
+            ['registertype', '=', $fields['registertype']],
+        ])->first();
+
+        if (!$user) {
+            return $this->sendError('userNotFound', [], 200);
+        }
+
+        if ($fields['email'] != $user->email) {
+            return $this->sendError('wrongDetails', [], 200);
+        }
+
+        $token = $user->createToken('afe34vf324dfGU45')->plainTextToken;
+        $data['token'] =  $token;
+        $data['user'] =  UserResource::make($user);
+
+        // $pair = Pair::find($user->pair_id);
+
+
+        /*  if ($pair->user2_id == NULL) {
+            return $this->sendError('notGrouped', [$pair->uuid], 200);
+        } */
+        //  $data['pair'] = PairResource::make($pair);
+        // $partnerId = $pair->user1_id == $user->id ? $pair->user2_id : $pair->user1_id;
+        // $data['partner'] =  UserResource::make(User::where('id',$partnerId)->first());
         return $this->sendResponse($data, 'successfully.');
     }
 

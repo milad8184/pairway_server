@@ -31,7 +31,7 @@ class DashboardController extends BaseController
             "dailyquote" => $dailyquote[0],
             "challenge" => $challenge,
             "points" => $user->points,
-            "partnerId" => $user->partnerId
+            "partnerId" => $user->partner_id
         ];
 
         return $this->sendResponse($resp);

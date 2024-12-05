@@ -81,6 +81,7 @@ Route::prefix('v1')->group(function () {
 
     //Public Routes 
     Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/login/native', [AuthController::class, 'loginnative']);
     Route::post('/checkGroupId', [AuthController::class, 'checkGroupId']);
     Route::post('/checkemail', [AuthController::class, 'checkEmail']);
 
@@ -88,4 +89,7 @@ Route::prefix('v1')->group(function () {
 
    
     Route::post('/register', [UserController::class, 'register']);
+    
+   
+    Route::get('/send', [UserController::class, 'pushnotification']);
 });
